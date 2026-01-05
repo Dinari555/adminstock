@@ -1,0 +1,309 @@
+Parfait ! Je vais te fournir **tous les diagrammes PUML** pour les chapitres 2 à 5 (Sprint 0 à Sprint 3) que tu peux ouvrir directement dans VS Code avec PlantUML.
+
+---
+
+# **Fichier complet PlantUML pour Chapitres 2 à 5**
+
+```puml
+'====================================
+' Chapitre 2 : Sprint 0 – Phase de préparation
+'====================================
+
+' Cas d'utilisation global
+@startuml Sprint0_UseCase
+actor Admin
+actor Employe
+
+usecase "Gérer produits" as UC1
+usecase "Gérer utilisateurs" as UC2
+usecase "Gérer factures" as UC3
+usecase "Gérer crédits" as UC4
+usecase "Voir rapports" as UC5
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+
+Employe --> UC1
+Employe --> UC3
+Employe --> UC4
+@enduml
+
+' Diagramme de classes global
+@startuml Sprint0_Class
+class Produit {
+  id
+  nom
+  categorie
+  quantite
+  prix
+}
+class Client {
+  id
+  nom
+  telephone
+  adresse
+  credit
+}
+class Facture {
+  id
+  date
+  client
+  listeProduits
+  montantTotal
+  statutPaiement
+}
+class Utilisateur {
+  id
+  nom
+  role
+  email
+  motDePasse
+}
+
+Client "1" --> "*" Facture
+Facture "*" --> "*" Produit
+Utilisateur "1" --> "*" Facture
+Utilisateur "1" --> "*" Produit
+@enduml
+
+' Diagramme de séquence : Connexion
+@startuml Sprint0_Seq
+actor Utilisateur
+participant "Frontend" as Front
+participant "Backend /login" as Back
+participant "MongoDB" as DB
+
+Utilisateur -> Front : saisie identifiants
+Front -> Back : POST /login
+Back -> DB : recherche utilisateur
+DB --> Back : utilisateur
+Back --> Front : token + role
+Front --> Utilisateur : accès accordé
+@enduml
+
+'====================================
+' Chapitre 3 : Sprint 1 – Authentification
+'====================================
+
+' Cas d'utilisation – Authentification
+@startuml Sprint1_UseCase
+actor Admin
+actor Employe
+
+usecase "Se connecter" as UC1
+usecase "Vérifier identifiants + JWT" as UC2
+
+Admin --> UC1
+Admin --> UC2
+
+Employe --> UC1
+Employe --> UC2
+@enduml
+
+' Séquence – Connexion Sprint 1
+@startuml Sprint1_Seq
+actor Utilisateur
+participant "Login.jsx" as Front
+participant "POST /login" as Back
+participant "JWT" as Token
+
+Utilisateur -> Front : email + mot de passe
+Front -> Back : POST /login
+Back -> Token : Génération JWT
+Back --> Front : token + role
+Front --> Utilisateur : stockage token
+@enduml
+
+' Classe User minimale
+@startuml Sprint1_Class
+class User {
+  email : String
+  motDePasse : String
+  role : String
+}
+@enduml
+
+'====================================
+' Chapitre 4 : Sprint 2 – Navigation & Gestion des Utilisateurs
+'====================================
+
+' Cas d'utilisation – Navigation & Rôles
+@startuml Sprint2_UseCase
+actor Admin
+actor Employe
+
+usecase "Se connecter" as UC1
+usecase "Accéder Dashboard Admin" as UC2
+usecase "Accéder Dashboard Employé" as UC3
+usecase "Se déconnecter" as UC4
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC4
+
+Employe --> UC1
+Employe --> UC3
+Employe --> UC4
+@enduml
+
+' Séquence – Navigation post-login
+@startuml Sprint2_Seq
+actor Utilisateur
+participant "Login.jsx" as Front
+participant "POST /login" as Back
+participant "JWT" as Token
+participant "Dashboard" as Dash
+
+Utilisateur -> Front : saisie email + mot de passe
+Front -> Back : POST /login
+Back -> Token : Génération JWT avec rôle
+Back --> Front : token + rôle
+Front --> Dash : redirection selon rôle
+Dash -> Front : vérifie token pour routes protégées
+Utilisateur -> Front : clique "Déconnexion"
+Front -> Token : suppression token
+Front --> Utilisateur : page login
+@enduml
+
+' Classes principales Sprint 2
+@startuml Sprint2_Class
+class User {
+  id : ObjectId
+  nom : String
+  email : String
+  motDePasse : String
+  role : String
+}
+class AuthToken {
+  token : String
+  role : String
+  dateExpiration : Date
+}
+class Dashboard {
+  AdminDashboard : ReactComponent
+  EmployeeDashboard : ReactComponent
+}
+@enduml
+
+'====================================
+' Chapitre 5 : Sprint 3 – Gestion du Stock
+'====================================
+
+' Cas d'utilisation – Stock
+@startuml Sprint3_UseCase
+actor Admin
+actor Employe
+
+usecase "Voir liste produits" as UC1
+usecase "Ajouter produit" as UC2
+usecase "Modifier produit" as UC3
+usecase "Supprimer produit" as UC4
+usecase "Rechercher produit" as UC5
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+
+Employe --> UC1
+Employe --> UC5
+@enduml
+
+' Séquence – CRUD produit
+@startuml Sprint3_Seq
+actor Admin
+actor Employe
+participant "Frontend React" as Front
+participant "Backend /products" as Back
+participant "MongoDB" as DB
+
+== Consultation produits ==
+Employe -> Front : demande liste produits
+Front -> Back : GET /products
+Back -> DB : find()
+DB --> Back : produits
+Back --> Front : liste produits
+Front --> Employe : affichage
+
+== Ajout produit ==
+Admin -> Front : formulaire produit
+Front -> Back : POST /products
+Back -> DB : insertOne()
+DB --> Back : succès
+Back --> Front : confirmation
+Front --> Admin : affichage message
+
+== Modification produit ==
+Admin -> Front : sélection produit
+Front -> Back : PUT /products/:id
+Back -> DB : updateOne()
+DB --> Back : succès
+Back --> Front : confirmation
+Front --> Admin : affichage message
+
+== Suppression produit ==
+Admin -> Front : clique supprimer
+Front -> Back : DELETE /products/:id
+Back -> DB : deleteOne()
+DB --> Back : succès
+Back --> Front : confirmation
+Front --> Admin : affichage message
+@enduml
+
+' Classes principales – Produit
+@startuml Sprint3_Class
+class Produit {
+  id : ObjectId
+  nom : String
+  categorie : String
+  quantite : Number
+  prix : Number
+  dateCreation : Date
+}
+
+class User {
+  id : ObjectId
+  role : String
+}
+@enduml
+
+' Architecture API – Stock
+@startuml Sprint3_Architecture
+node "Frontend React" {
+  component "ProductList.jsx"
+  component "AddProduct.jsx"
+  component "EditProduct.jsx"
+}
+
+node "Backend Express" {
+  component "Routes /products"
+  component "Controller Produits"
+}
+
+node "MongoDB" {
+  database "Collection Produits"
+}
+
+ProductList.jsx --> "Routes /products" : GET /products
+AddProduct.jsx --> "Routes /products" : POST /products
+EditProduct.jsx --> "Routes /products" : PUT /products/:id
+"Routes /products" --> "Collection Produits" : CRUD
+@enduml
+```
+
+---
+
+✅ **Instructions pour VS Code**
+
+1. Installer l’extension **PlantUML**.
+2. Copier le code ci-dessus dans un fichier, par exemple `diagrammes.puml`.
+3. Ouvrir le fichier dans VS Code et cliquer sur **"Preview Current Diagram"** (Alt+D ou clic droit → Preview).
+4. Tu peux exporter chaque diagramme en **PNG ou PDF** directement depuis la preview.
+
+---
+
+

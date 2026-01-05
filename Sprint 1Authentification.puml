@@ -1,0 +1,20 @@
+@startuml
+class User {
+  id : ObjectId
+  nom : String
+  email : String
+  motDePasse : String
+  role : String
+}
+
+class AuthToken {
+  token : String
+  role : String
+  dateExpiration : Date
+}
+
+class Dashboard {
+  AdminDashboard : ReactComponent
+  EmployeeDashboard : ReactComponent
+}
+@enduml

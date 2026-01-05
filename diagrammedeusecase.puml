@@ -1,0 +1,39 @@
+@startuml
+
+class User {
+  +id : String
+  +nom : String
+  +role : String
+  +email : String
+  +motDePasse : String
+}
+
+class Produit {
+  +id : String
+  +nom : String
+  +stock : int
+  +prix : Double
+  +statut : String
+}
+
+class Facture {
+  +id : String
+  +idClient : String
+  +montantTotal : Double
+  +date : Date
+}
+
+class Credit {
+  +id : String
+  +idClient : String
+  +idFacture : String
+  +montantInitial : Double
+  +montantRestant : Double
+  +statut : String
+}
+
+User "1" -- "0..*" Facture
+Facture "1" -- "0..1" Credit
+Produit "1" -- "0..*" Facture
+
+@enduml

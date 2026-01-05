@@ -1,0 +1,728 @@
+openapi: 3.0.0
+info:
+  title: Depot Dashboard API
+  description: API pour la gestion de dépôt de fournitures scolaires
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@depot.com
+
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Development server
+  - url: https://depot.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Auth
+    description: Authentification
+  - name: Users
+    description: Gestion des utilisateurs (admin only)
+  - name: Clients
+    description: Gestion des clients
+  - name: Products
+    description: Gestion des produits et stock
+  - name: Invoices
+    description: Gestion des factures
+  - name: Dashboard
+    description: Tableau de bord et statistiques
+  - name: Audit
+    description: Logs d'audit (admin only)
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                  uptime:
+                    type: number
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Connexion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                      refreshToken:
+                        type: string
+                      user:
+                        $ref: '#/components/schemas/User'
+        '401':
+          description: Identifiants invalides
+
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Rafraîchir le token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token rafraîchi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Déconnexion
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Déconnexion réussie
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Liste des utilisateurs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [admin, employee]
+      responses:
+        '200':
+          description: Liste des utilisateurs
+    post:
+      tags:
+        - Users
+      summary: Créer un utilisateur
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '201':
+          description: Utilisateur créé
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Détails d'un utilisateur
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détails de l'utilisateur
+    put:
+      tags:
+        - Users
+      summary: Modifier un utilisateur
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '200':
+          description: Utilisateur modifié
+    delete:
+      tags:
+        - Users
+      summary: Supprimer un utilisateur
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Utilisateur supprimé
+
+  /clients:
+    get:
+      tags:
+        - Clients
+      summary: Liste des clients
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des clients
+    post:
+      tags:
+        - Clients
+      summary: Créer un client
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientInput'
+      responses:
+        '201':
+          description: Client créé
+
+  /clients/{id}:
+    get:
+      tags:
+        - Clients
+      summary: Détails d'un client
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Détails du client
+    put:
+      tags:
+        - Clients
+      summary: Modifier un client
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientInput'
+      responses:
+        '200':
+          description: Client modifié
+    delete:
+      tags:
+        - Clients
+      summary: Supprimer un client
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Client supprimé
+
+  /products:
+    get:
+      tags:
+        - Products
+      summary: Liste des produits
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: lowStock
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Liste des produits
+    post:
+      tags:
+        - Products
+      summary: Créer un produit
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Produit créé
+
+  /products/alerts:
+    get:
+      tags:
+        - Products
+      summary: Produits avec stock faible
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des produits en alerte
+
+  /products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Détails d'un produit
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Détails du produit
+    put:
+      tags:
+        - Products
+      summary: Modifier un produit
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '200':
+          description: Produit modifié
+    delete:
+      tags:
+        - Products
+      summary: Supprimer un produit
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Produit supprimé
+
+  /products/{id}/stock:
+    post:
+      tags:
+        - Products
+      summary: Opération de stock
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - quantite
+              properties:
+                type:
+                  type: string
+                  enum: [IN, OUT]
+                quantite:
+                  type: integer
+                  minimum: 1
+                note:
+                  type: string
+      responses:
+        '200':
+          description: Opération réussie
+
+  /invoices:
+    get:
+      tags:
+        - Invoices
+      summary: Liste des factures
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des factures
+    post:
+      tags:
+        - Invoices
+      summary: Créer une facture
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceInput'
+      responses:
+        '201':
+          description: Facture créée
+
+  /invoices/{id}:
+    get:
+      tags:
+        - Invoices
+      summary: Détails d'une facture
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Détails de la facture
+    put:
+      tags:
+        - Invoices
+      summary: Modifier une facture
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statut:
+                  type: string
+                  enum: [payé, en_attente, en_retard]
+      responses:
+        '200':
+          description: Facture modifiée
+    delete:
+      tags:
+        - Invoices
+      summary: Supprimer une facture
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Facture supprimée
+
+  /invoices/{id}/pdf:
+    get:
+      tags:
+        - Invoices
+      summary: Télécharger PDF de la facture
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Fichier PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /dashboard/summary:
+    get:
+      tags:
+        - Dashboard
+      summary: Résumé du tableau de bord
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Statistiques du tableau de bord
+
+  /dashboard/sales:
+    get:
+      tags:
+        - Dashboard
+      summary: Ventes par période
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Données de ventes
+
+  /audit:
+    get:
+      tags:
+        - Audit
+      summary: Logs d'audit
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: entity
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des logs d'audit
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, employee]
+        createdAt:
+          type: string
+          format: date-time
+
+    UserInput:
+      type: object
+      required:
+        - nom
+        - prenom
+        - email
+        - password
+      properties:
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        role:
+          type: string
+          enum: [admin, employee]
+
+    Client:
+      type: object
+      properties:
+        _id:
+          type: string
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+          format: email
+        contact:
+          type: string
+        adresse:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ClientInput:
+      type: object
+      required:
+        - nom
+        - prenom
+        - contact
+      properties:
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+          format: email
+        contact:
+          type: string
+        adresse:
+          type: string
+
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+        reference:
+          type: string
+        nom:
+          type: string
+        description:
+          type: string
+        prix:
+          type: number
+        quantite:
+          type: integer
+        seuilMin:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    ProductInput:
+      type: object
+      required:
+        - reference
+        - nom
+        - prix
+        - seuilMin
+      properties:
+        reference:
+          type: string
+        nom:
+          type: string
+        description:
+          type: string
+        prix:
+          type: number
+        quantite:
+          type: integer
+        seuilMin:
+          type: integer
+
+    Invoice:
+      type: object
+      properties:
+        _id:
+          type: string
+        clientId:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: string
+              qte:
+                type: integer
+              prixUnitaire:
+                type: number
+              total:
+                type: number
+        total:
+          type: number
+        statut:
+          type: string
+          enum: [payé, en_attente, en_retard]
+        date:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+
+    InvoiceInput:
+      type: object
+      required:
+        - clientId
+        - items
+      properties:
+        clientId:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - productId
+              - qte
+            properties:
+              productId:
+                type: string
+              qte:
+                type: integer
+                minimum: 1
+
+
+
