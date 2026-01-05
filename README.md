@@ -1,4 +1,4 @@
-# Depot Dashboard - Système de Gestion de Dépôt de Fournitures Scolaires
+# Adminstock - Système de Gestion de Dépôt de Fournitures Scolaires
 
 Application complète MERN (MongoDB, Express, React, Node.js) pour la gestion d'un dépôt de fournitures scolaires avec authentification JWT, gestion des stocks, facturation et tableau de bord.
 
