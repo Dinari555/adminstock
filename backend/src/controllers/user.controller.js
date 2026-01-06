@@ -41,7 +41,7 @@ export const getUserById = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Utilisateur non trouvé',
+        message: 'Utilisateur non trouvé !',
       });
     }
 

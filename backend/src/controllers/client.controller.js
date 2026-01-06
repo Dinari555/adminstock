@@ -153,6 +153,5 @@ export const deleteClient = async (req, res, next) => {
     });
   } catch (error) {
   }
-};
-
+}; 
 
